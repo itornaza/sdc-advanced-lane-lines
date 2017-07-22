@@ -2,6 +2,7 @@
 from classes.convert import Convert
 from classes.thresholding import Thresholding
 from classes.plotting import Plotting
+from classes.camera import Camera
 
 import numpy as np
 import cv2
@@ -19,6 +20,9 @@ KERNEL = 7
 #--------------
 
 if __name__ == '__main__':
+    
+    # Calibrate the camera and create a calibration file
+    Camera.pipeline()
     
     # Read in an image
     image = mpimg.imread('signs_vehicles_xygrad.png')
