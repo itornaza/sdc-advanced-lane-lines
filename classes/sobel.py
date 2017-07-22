@@ -2,10 +2,6 @@
 import numpy as np
 import cv2
 
-#--------------
-# Sobel math
-#--------------
-
 class Sobel():
 
     def get_x(img, kernel):
