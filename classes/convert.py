@@ -3,10 +3,6 @@
 import numpy as np
 import cv2
 
-#--------------
-# Conversions
-#--------------
-
 class Convert():
 
     def toGray(img):

@@ -5,10 +5,6 @@ from classes.convert import Convert
 import numpy as np
 import cv2
 
-#--------------
-# Thresholding
-#--------------
-
 class Thresholding():
 
     def abs_sobel(gray, orient='x', kernel=3, thresh=(0, 255)):
