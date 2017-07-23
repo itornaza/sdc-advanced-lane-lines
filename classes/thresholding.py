@@ -7,6 +7,10 @@ import cv2
 
 class Thresholding():
 
+    #------------
+    # API
+    #------------
+
     def abs_sobel(gray, orient='x', kernel=3, thresh=(0, 255)):
         '''Calculate gradient'''
         
@@ -78,12 +82,13 @@ class Thresholding():
         return binary_output
 
     def hlsPlusGrad(image, kernel=3, channel_sel='s', s_thresh=(170, 255), sx_thresh=(20, 100)):
+        '''Return the mask binary from processing both the HLS color space and one of it's channels'''
 
         # Convert to HLS color space and separate the S channel
         hls = Convert.toHLS(image).astype(np.float)
         
         # Assign the channel
-        channel = Thresholding.getHLSChannel(hls, channel_sel)
+        channel = Thresholding._getHLSChannel(hls, channel_sel)
         
         # Sobel x
         abs_sobelx = Sobel.get_abs_x(channel, kernel)
@@ -103,7 +108,28 @@ class Thresholding():
         # Return binary mask
         return channel_binary
 
-    def getHLSChannel(hls, channel_selector):
+    def sobelGrayscaleCombo(image, kernel):
+        # Convert to grayscale and run the thresholding functions on the grayscale image
+        gray = Convert.toGray(image)
+        
+        # Apply each of the thresholding functions
+        gradx = Thresholding.abs_sobel(gray, orient='x', kernel=kernel, thresh=(30, 100))
+        grady = Thresholding.abs_sobel(gray, orient='y', kernel=kernel, thresh=(30, 100))
+        mag_binary = Thresholding.mag(gray, kernel=kernel, mag_thresh=(90, 110))
+        dir_binary = Thresholding.dir(gray, kernel=kernel, thresh=(0.7, np.pi/2))
+        
+        # Combine the thresholding functions into one
+        combined = np.zeros_like(dir_binary)
+        combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+        
+        # Return binary mask
+        return combined
+
+    #------------
+    # Methods
+    #------------
+
+    def _getHLSChannel(hls, channel_selector):
         '''Given an hls colorspace and a channel, returns the appropriate channel'''
         
         # Channels matrix indices

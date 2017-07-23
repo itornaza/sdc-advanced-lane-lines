@@ -13,35 +13,28 @@ import matplotlib.image as mpimg
 # Constants
 #--------------
 
-KERNEL = 7
+CALIBRATE = False # Set to True the first time you run the program
+KERNEL = 7 # Increase for smoother result (odd numbers only)
 
 #--------------
-# Main
+# Pipeline
 #--------------
 
-if __name__ == '__main__':
-    
+def pipeline():
     # Calibrate the camera and create a calibration file
-    Camera.pipeline()
+    if CALIBRATE: Camera.calibrate()
     
     # Read in an image
-    image = mpimg.imread('signs_vehicles_xygrad.png')
-
-    # Convert to grayscale and run the thresholding functions on the grayscale image
-    gray = Convert.toGray(image)
-
-    # Apply each of the thresholding functions
-    gradx = Thresholding.abs_sobel(gray, orient='x', kernel=KERNEL, thresh=(30, 100))
-    grady = Thresholding.abs_sobel(gray, orient='y', kernel=KERNEL, thresh=(30, 100))
-    mag_binary = Thresholding.mag(gray, kernel=KERNEL, mag_thresh=(90, 110))
-    dir_binary = Thresholding.dir(gray, kernel=KERNEL, thresh=(0.7, np.pi/2))
-
-    # Combine the thresholding functions into one
-    combined = np.zeros_like(dir_binary)
-    combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
-
+    image = mpimg.imread('test_images/straight_lines1.jpg')
+    
+    # TODO: Undistort the image before processing
+    
+    # Get the binary mask of the image after sobel processing
+    combined = Thresholding.hlsPlusGrad(image, KERNEL)
+    #combined = Thresholding.sobelGrayscaleCombo(image, KERNEL)
+    
     # Plot the original and combined images
     Plotting.plotResult(image, combined)
 
-    # Plot stacked images from pipeline
-    Plotting.plotResult(image, Thresholding.hlsPlusGrad(image, KERNEL))
+if __name__ == '__main__':
+    pipeline()
