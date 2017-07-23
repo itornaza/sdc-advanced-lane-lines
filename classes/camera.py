@@ -18,9 +18,12 @@ class Camera():
     images_path = 'camera_cal/calibration*.jpg'
     test_image_path = 'camera_cal/calibration3.jpg'
     test_undistort_image_path = 'output_images/test_undist_calibration3.jpg'
+    calibration_archive = "camera_cal/dist_pickle.p"
     delay = 500
     image_string = 'img'
     img = cv2.imread(test_image_path)
+    mtx_string = 'mtx'
+    dist_string = 'dist'
     
     #-------------
     # Methods
@@ -74,9 +77,9 @@ class Camera():
     def _saveCalibration(mtx, dist):
         '''Save the camera calibration result for later use'''
         dist_pickle = {}
-        dist_pickle["mtx"] = mtx
-        dist_pickle["dist"] = dist
-        pickle.dump( dist_pickle, open( "camera_cal/dist_pickle.p", "wb" ) )
+        dist_pickle[Camera.mtx_string] = mtx
+        dist_pickle[Camera.dist_string] = dist
+        pickle.dump(dist_pickle, open(Camera.calibration_archive, "wb"))
 
     def _undistortTestImage(mtx, dist):
         '''Save the undistorted test image'''
@@ -89,6 +92,8 @@ class Camera():
     #-------------
 
     def calibrate():
+        '''Call this function to calibrate your camera'''
+        
         # Set up and collect the calibration points
         objp = Camera._prepareObjects()
         objpoints, imgpoints = Camera._collectObjectPoints(objp)
@@ -100,3 +105,15 @@ class Camera():
         # Undistort the test image and display it in comparisson
         dst = Camera._undistortTestImage(mtx, dist)
         Plotting.plotUndistortedImage(Camera.img, dst)
+
+    def getCalibrationData():
+        '''Get the calibration data from the archive'''
+        with open(Camera.calibration_archive, "rb") as f:
+            pickle_data = pickle.load(f)
+            mtx = pickle_data[Camera.mtx_string]
+            dist = pickle_data[Camera.dist_string]
+        return mtx, dist
+
+    def undistort(image, mtx, dist):
+        '''Undistort an image'''
+        return cv2.undistort(image, mtx, dist, None, mtx)
