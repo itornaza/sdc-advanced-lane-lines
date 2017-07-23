@@ -9,24 +9,31 @@ import pickle
 
 class Camera():
 
+    #-------------
+    # Properties
+    #-------------
+    
     rows = 6
     cols = 9
     images_path = 'camera_cal/calibration*.jpg'
-    test_image_path = 'camera_cal/calibration13.jpg'
+    test_image_path = 'camera_cal/calibration3.jpg'
+    test_undistort_image_path = 'output_images/test_undist_calibration3.jpg'
     delay = 500
     image_string = 'img'
+    img = cv2.imread(test_image_path)
+    
+    #-------------
+    # Methods
+    #-------------
 
-    def prepareObjects():
+    def _prepareObjects():
         '''Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)'''
-        
         objp = np.zeros((Camera.rows * Camera.cols, 3), np.float32)
         objp[:,:2] = np.mgrid[0:Camera.cols, 0:Camera.rows].T.reshape(-1,2)
-        
         return objp
 
-    def collectObjectPoints(objp):
-    
-        # Arrays to store object points and image points from all the images.
+    def _collectObjectPoints(objp):
+        '''Calculate the object points and image points from all the images'''
         objpoints = [] # 3d points in real world space
         imgpoints = [] # 2d points in image plane.
     
@@ -46,43 +53,50 @@ class Camera():
                 objpoints.append(objp)
                 imgpoints.append(corners)
                 
-                # Draw and display the corners
+                # Draw and display the corners for each image to visually test precision
                 cv2.drawChessboardCorners(img, (Camera.cols, Camera.rows), corners, ret)
                 cv2.imshow(Camera.image_string, img)
                 cv2.waitKey(Camera.delay)
 
+        # Close all chessboard plots
+        cv2.destroyAllWindows()
+
+        # Return the calibration points
         return objpoints, imgpoints
 
-    def saveUndistortedImage(img, mtx, dist):
-        '''# Save the undistorted test image'''
-        
-        dst = cv2.undistort(img, mtx, dist, None, mtx)
-        cv2.imwrite('camera_cal/test_undist.jpg', dst)
-    
-        return dst
+    def _calibrate(objpoints, imgpoints):
+        '''Do camera calibration given object points and image points'''
+        img_size = (Camera.img.shape[1], Camera.img.shape[0])
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints,
+                                                           img_size, None, None)
+        return mtx, dist
 
-    def saveCalibration(mtx, dist):
+    def _saveCalibration(mtx, dist):
         '''Save the camera calibration result for later use'''
-
         dist_pickle = {}
         dist_pickle["mtx"] = mtx
         dist_pickle["dist"] = dist
         pickle.dump( dist_pickle, open( "camera_cal/dist_pickle.p", "wb" ) )
 
-    def calibrate(objpoints, imgpoints):
-        '''Do camera calibration given object points and image points'''
-        
-        img = cv2.imread(Camera.test_image_path)
-        img_size = (img.shape[1], img.shape[0])
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_size, None, None)
-    
-        return img, mtx, dist
+    def _undistortTestImage(mtx, dist):
+        '''Save the undistorted test image'''
+        dst = cv2.undistort(Camera.img, mtx, dist, None, mtx)
+        cv2.imwrite(Camera.test_undistort_image_path, dst)
+        return dst
 
-    def pipeline():
-        objp = Camera.prepareObjects()
-        objpoints, imgpoints = Camera.collectObjectPoints(objp)
-        cv2.destroyAllWindows()
-        img, mtx, dist = Camera.calibrate(objpoints, imgpoints)
-        dst = Camera.saveUndistortedImage(img, mtx, dist)
-        Camera.saveCalibration(mtx, dist)
-        Plotting.plotUndistortedImage(img, dst)
+    #-------------
+    # Camera API
+    #-------------
+
+    def calibrate():
+        # Set up and collect the calibration points
+        objp = Camera._prepareObjects()
+        objpoints, imgpoints = Camera._collectObjectPoints(objp)
+        
+        # Calibrate the camera and save the calibration matrix in file
+        mtx, dist = Camera._calibrate(objpoints, imgpoints)
+        Camera._saveCalibration(mtx, dist)
+        
+        # Undistort the test image and display it in comparisson
+        dst = Camera._undistortTestImage(mtx, dist)
+        Plotting.plotUndistortedImage(Camera.img, dst)
