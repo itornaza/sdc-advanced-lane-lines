@@ -6,7 +6,6 @@ class Plotting():
 
     def plotResult(image, combined):
         '''Plot the original and combined image side by side'''
-
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
         f.tight_layout()
         ax1.imshow(image)
@@ -18,7 +17,6 @@ class Plotting():
 
     def plotUndistortedImage(image, dst):
         '''Visualize undistortion'''
-        
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
         ax1.imshow(image)
         ax1.set_title('Original Image', fontsize=30)

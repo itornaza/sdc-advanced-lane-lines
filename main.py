@@ -4,6 +4,7 @@ from classes.thresholding import Thresholding
 from classes.plotting import Plotting
 from classes.camera import Camera
 
+import sys
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -13,28 +14,48 @@ import matplotlib.image as mpimg
 # Constants
 #--------------
 
-CALIBRATE = False # Set to True the first time you run the program
 KERNEL = 7 # Increase for smoother result (odd numbers only)
 
 #--------------
 # Pipeline
 #--------------
 
-def pipeline():
-    # Calibrate the camera and create a calibration file
-    if CALIBRATE: Camera.calibrate()
+def pipeline(calibrate):
+    '''The pipeline to calculate the lane lines'''
+    
+    # Calibrate the camera if the "-cal" option is provided
+    if calibrate: Camera.calibrate()
     
     # Read in an image
     image = mpimg.imread('test_images/straight_lines1.jpg')
     
-    # TODO: Undistort the image before processing
+    # Undistort the image before processing and plot an example
+    mtx, dist = Camera.getCalibrationData()
+    undistorted_image = Camera.undistort(image, mtx, dist)
+    Plotting.plotUndistortedImage(image, undistorted_image)
     
-    # Get the binary mask of the image after sobel processing
-    combined = Thresholding.hlsPlusGrad(image, KERNEL)
-    #combined = Thresholding.sobelGrayscaleCombo(image, KERNEL)
+    # Process the undistorted image with thresholding to get a binary mask
+    binary_mask = Thresholding.hlsPlusGrad(undistorted_image, KERNEL)
+    #binary_mask = Thresholding.sobelGrayscaleCombo(image, KERNEL)
     
-    # Plot the original and combined images
-    Plotting.plotResult(image, combined)
+    # Plot the undistorted and binary mask images
+    Plotting.plotResult(undistorted_image, binary_mask)
+
+#--------------
+# Main
+#--------------
+
+def parseCommands():
+    '''Parse the command line arguments'''
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '-cal':
+            return True
+        else:
+            print("Enter -cal to calibrate the camera")
+            exit(0)
+    else:
+        return False
 
 if __name__ == '__main__':
-    pipeline()
+    calibrate = parseCommands()
+    pipeline(calibrate)
