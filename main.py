@@ -20,12 +20,11 @@ KERNEL = 7 # Increase for smoother result (odd numbers only)
 # Pipeline
 #--------------
 
-def pipeline(calibrate):
-    '''The pipeline to calculate the lane lines'''
-    
-    # Calibrate the camera if the "-cal" option is provided
-    if calibrate: Camera.calibrate()
-    
+def pipeline():
+    '''
+    The pipeline to calculate the lane lines.
+    Calibration shall be performed at least once before using the pipeline
+    '''
     # Read in an image
     image = mpimg.imread('test_images/straight_lines1.jpg')
     
@@ -58,4 +57,7 @@ def parseCommands():
 
 if __name__ == '__main__':
     calibrate = parseCommands()
-    pipeline(calibrate)
+    if calibrate:
+        Camera.calibrate()
+    else:
+        pipeline()
