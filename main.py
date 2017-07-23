@@ -15,6 +15,7 @@ import matplotlib.image as mpimg
 #--------------
 
 KERNEL = 7 # Increase for smoother result (odd numbers only)
+test_image = 'test_images/straight_lines1.jpg'
 
 #--------------
 # Pipeline
@@ -26,7 +27,7 @@ def pipeline():
     Calibration shall be performed at least once before using the pipeline
     '''
     # Read in an image
-    image = mpimg.imread('test_images/straight_lines1.jpg')
+    image = mpimg.imread(test_image)
     
     # Undistort the image before processing and plot an example
     mtx, dist = Camera.getCalibrationData()
@@ -35,7 +36,6 @@ def pipeline():
     
     # Process the undistorted image with thresholding to get a binary mask
     binary_mask = Thresholding.hlsPlusGrad(undistorted_image, KERNEL)
-    #binary_mask = Thresholding.sobelGrayscaleCombo(image, KERNEL)
     
     # Plot the undistorted and binary mask images
     Plotting.plotResult(undistorted_image, binary_mask)

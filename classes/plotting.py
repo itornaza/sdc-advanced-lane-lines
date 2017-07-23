@@ -11,7 +11,7 @@ class Plotting():
         ax1.imshow(image)
         ax1.set_title('Original', fontsize=24)
         ax2.imshow(combined, cmap='gray')
-        ax2.set_title('Combined', fontsize=24)
+        ax2.set_title('Binary mask', fontsize=24)
         plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
         plt.show()
 

@@ -81,6 +81,26 @@ class Thresholding():
         # Return the binary mask
         return binary_output
 
+    def sobelGrayscaleCombo(image, kernel):
+        '''Combines sobel, magnitude and direction methods to create a binary mask'''
+        
+        # Convert to grayscale and run the thresholding functions on the grayscale image
+        gray = Convert.toGray(image)
+        
+        # Apply each of the thresholding functions
+        gradx = Thresholding.abs_sobel(gray, orient='x', kernel=kernel, thresh=(30, 100))
+        grady = Thresholding.abs_sobel(gray, orient='y', kernel=kernel, thresh=(30, 100))
+        mag_binary = Thresholding.mag(gray, kernel=kernel, mag_thresh=(90, 110))
+        dir_binary = Thresholding.dir(gray, kernel=kernel, thresh=(0.7, np.pi/2))
+        
+        # Combine the thresholding functions into one
+        combined = np.zeros_like(dir_binary)
+        combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+        
+        # Return binary mask
+        return combined
+
+
     def hlsPlusGrad(image, kernel=3, channel_sel='s', s_thresh=(170, 255), sx_thresh=(20, 100)):
         '''Return the mask binary from processing both the HLS color space and one of it's channels'''
 
@@ -108,22 +128,20 @@ class Thresholding():
         # Return binary mask
         return channel_binary
 
-    def sobelGrayscaleCombo(image, kernel):
-        # Convert to grayscale and run the thresholding functions on the grayscale image
-        gray = Convert.toGray(image)
+    def optimum(image, kernel):
+        '''
+        Creates a robust mask to detect lane lines of white or yellow color in shades 
+        under daylight conditions
+        '''
+        # TODO: Get the S channel from the HSL color space
         
-        # Apply each of the thresholding functions
-        gradx = Thresholding.abs_sobel(gray, orient='x', kernel=kernel, thresh=(30, 100))
-        grady = Thresholding.abs_sobel(gray, orient='y', kernel=kernel, thresh=(30, 100))
-        mag_binary = Thresholding.mag(gray, kernel=kernel, mag_thresh=(90, 110))
-        dir_binary = Thresholding.dir(gray, kernel=kernel, thresh=(0.7, np.pi/2))
+        # TODO: Get the R channel from the RGB color space
         
-        # Combine the thresholding functions into one
-        combined = np.zeros_like(dir_binary)
-        combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1))] = 1
+        # TODO: Get the direction to focus on vertical lines
         
-        # Return binary mask
-        return combined
+        # TODO: Combine the above masks into one
+        
+        # TODO: Return the binary mask
 
     #------------
     # Methods
@@ -147,3 +165,23 @@ class Thresholding():
     
         # Return the channel
         return channel
+
+    def _getRGBChannel(rgb, channel_selector):
+        '''Given an rgb colorspace and a channel, returns the appropriate channel'''
+        
+        # Channels matrix indices
+        R = 0
+        G = 1
+        B = 2
+        
+        # Get the channel from the selector
+        if channel_selector == 'r':
+            channel = rgb[:,:,R]
+        elif channel_selector == 'g':
+            channel = rgb[:,:,G]
+        else:
+            channel = rgb[:,:,B]
+        
+        # Return the channel
+        return channel
+
