@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import glob
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import pickle
 
 class Camera():
@@ -18,6 +19,7 @@ class Camera():
     images_path = 'camera_cal/calibration*.jpg'
     test_image_path = 'camera_cal/calibration3.jpg'
     test_undistort_image_path = 'output_images/test_undist_calibration3.jpg'
+    road_test_image = 'test_images/straight_lines1.jpg'
     calibration_archive = "camera_cal/dist_pickle.p"
     delay = 500
     image_string = 'img'
@@ -106,6 +108,11 @@ class Camera():
         # Undistort the test image and display it in comparisson
         dst = Camera._undistortTestImage(mtx, dist)
         Plotting.plotUndistortedImage(Camera.img, dst)
+    
+        # Undistort the road test image and display it in comparisson
+        road_image = mpimg.imread(Camera.road_test_image)
+        undistorted_image = Camera.undistort(road_image, mtx, dist)
+        Plotting.plotUndistortedImage(road_image, undistorted_image)
 
     def getCalibrationData():
         '''Get the calibration data from the archive'''

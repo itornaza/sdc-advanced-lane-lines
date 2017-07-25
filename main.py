@@ -32,10 +32,9 @@ def pipeline():
     # Undistort the image before processing and plot an example
     mtx, dist = Camera.getCalibrationData()
     undistorted_image = Camera.undistort(image, mtx, dist)
-    Plotting.plotUndistortedImage(image, undistorted_image)
     
     # Process the undistorted image with thresholding to get a binary mask
-    binary_mask = Thresholding.hlsPlusGrad(undistorted_image, KERNEL)
+    binary_mask = Thresholding.lane_detection_mask(undistorted_image, KERNEL)
     
     # Plot the undistorted and binary mask images
     Plotting.plotResult(undistorted_image, binary_mask)
@@ -47,7 +46,7 @@ def pipeline():
 def parseCommands():
     '''Parse the command line arguments'''
     if len(sys.argv) > 1:
-        if sys.argv[1] == '-cal':
+        if sys.argv[1] == '-c':
             return True
         else:
             print("Enter -cal to calibrate the camera")
