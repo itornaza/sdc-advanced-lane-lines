@@ -127,23 +127,65 @@ class Thresholding():
 
         # Return binary mask
         return r_mask
+    
+    def region_of_interest(image):
+        """
+        Applies an image mask.
+        
+        Only keeps the region of the image defined by the polygon
+        formed from `vertices`. The rest of the image is set to black.
+        """
+        
+        # Get the dimensions of the image
+        x_size = image.shape[1]
+        y_size = image.shape[0]
+        
+        # Assign the vertices of the region of interest
+        vertices = np.array([[
+                              (x_size*(1/24), y_size),
+                              (x_size*(11/24), y_size*(14/24)),
+                              (x_size*(13/24), y_size*(14/24)),
+                              (x_size*(23/24), y_size)]],
+                            dtype=np.int32)
+
+        
+        # Defining a blank mask to start with
+        mask = np.zeros_like(image)
+        
+        # Defining a 3 channel or 1 channel color to fill the mask with depending on the input image
+        if len(image.shape) > 2:
+            channel_count = image.shape[2]  # i.e. 3 or 4 depending on your image
+            ignore_mask_color = (255,) * channel_count
+        else:
+            ignore_mask_color = 255
+        
+        # Filling pixels inside the polygon defined by "vertices" with the fill color
+        cv2.fillPoly(mask, vertices, ignore_mask_color)
+        
+        # Returning the image only where mask pixels are nonzero
+        masked_image = cv2.bitwise_and(image, mask)
+        return masked_image
 
     def lane_detection_mask(image, kernel):
         '''
-        Creates a robust mask to detect lane lines of white or yellow color in shades 
+        Creates a robust mask to detect lane lines of white or yellow color in shades
         under daylight conditions
         '''
+        
+        # Read in the image
+        image = Thresholding.region_of_interest(image)
+            
         # HLS processing
         s_mask, sx_mask = Thresholding.hls_masks(image, kernel)
-    
+            
         # RGB processing
         r_mask = Thresholding.rgb_masks(image, kernel)
-    
+            
         # Grayscale processing
         gray_mask = Thresholding.gray_masks(image, kernel)
-        
+                
         # Return binary mask
-        return s_mask | sx_mask | (gray_mask & r_mask)
+        return (s_mask & sx_mask & gray_mask) | r_mask
 
     #------------
     # Methods

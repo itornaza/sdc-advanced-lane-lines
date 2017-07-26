@@ -23,3 +23,15 @@ class Plotting():
         ax2.imshow(dst)
         ax2.set_title('Undistorted Image', fontsize=30)
         plt.show()
+
+    def plotHistogram(histogram):
+        plt.plot(histogram)
+        plt.show()
+
+    def plotSlidingWindow(out_img, left_fitx, right_fitx, ploty):
+        plt.imshow(out_img)
+        plt.plot(left_fitx, ploty, color='yellow')
+        plt.plot(right_fitx, ploty, color='yellow')
+        plt.xlim(0, 1280)
+        plt.ylim(720, 0)
+        plt.show()
