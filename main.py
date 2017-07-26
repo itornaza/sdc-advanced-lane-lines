@@ -39,6 +39,16 @@ def pipeline():
     # Plot the undistorted and binary mask images
     Plotting.plotResult(undistorted_image, binary_mask)
 
+    # Perspective transform
+    warped, M_perspective = Convert.perspectiveTransform(binary_mask)
+    Plotting.plotResult(binary_mask, warped)
+
+    # Get the position of the left and right lanes
+    leftx_base, rightx_base = Convert.histogramPeaks(warped)
+    Convert.slidingWindow(warped)
+
+    # Fit
+
 #--------------
 # Main
 #--------------
@@ -49,7 +59,7 @@ def parseCommands():
         if sys.argv[1] == '-c':
             return True
         else:
-            print("Enter -cal to calibrate the camera")
+            print("Enter -c to calibrate the camera")
             exit(0)
     else:
         return False
