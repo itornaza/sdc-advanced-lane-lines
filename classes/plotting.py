@@ -35,3 +35,7 @@ class Plotting():
         plt.xlim(0, 1280)
         plt.ylim(720, 0)
         plt.show()
+
+    def simplePlot(image):
+        plt.imshow(image)
+        plt.show()
