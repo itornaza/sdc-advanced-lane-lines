@@ -1,5 +1,5 @@
 
-from classes.convert import Convert
+from classes.image_processing import Image_processing
 from classes.thresholding import Thresholding
 from classes.plotting import Plotting
 from classes.camera import Camera
@@ -15,7 +15,7 @@ import matplotlib.image as mpimg
 #--------------
 
 KERNEL = 7 # Increase for smoother result (odd numbers only)
-test_image = 'test_images/straight_lines1.jpg'
+test_image = 'test_images/test2.jpg' # straight_lines1
 
 #--------------
 # Pipeline
@@ -31,23 +31,34 @@ def pipeline():
     
     # Undistort the image before processing and plot an example
     mtx, dist = Camera.getCalibrationData()
-    undistorted_image = Camera.undistort(image, mtx, dist)
+    undist = Camera.undistort(image, mtx, dist)
     
     # Process the undistorted image with thresholding to get a binary mask
-    binary_mask = Thresholding.lane_detection_mask(undistorted_image, KERNEL)
+    binary_mask = Thresholding.lane_detection_mask(undist, KERNEL)
     
     # Plot the undistorted and binary mask images
-    Plotting.plotResult(undistorted_image, binary_mask)
+    Plotting.plotResult(undist, binary_mask)
 
     # Perspective transform
-    warped, M_perspective = Convert.perspectiveTransform(binary_mask)
+    warped, M, M_inv = Image_processing.perspectiveTransform(binary_mask)
     Plotting.plotResult(binary_mask, warped)
 
     # Get the position of the left and right lanes
-    leftx_base, rightx_base = Convert.histogramPeaks(warped)
-    Convert.slidingWindow(warped)
+    leftx_base, rightx_base = Image_processing.histogramPeaks(warped)
+    left_fit, right_fit = Image_processing.slidingWindowInit(warped)
 
-    # Fit
+    # Calculate the sliding window of a successive image, using the lane line
+    # equations that are already known from the previous image analysis
+    left_fit, right_fit = Image_processing.slidingWindowFollowing(warped, left_fit, right_fit)
+
+    # Calculate the curvature of the left and right lanes
+    left_curv, right_curv, curv_string= Image_processing.curvature(warped, left_fit, right_fit)
+
+    # Calculate the offset of the car from the center of the lane line
+    offset_m, offset_string = Image_processing.offsetFromCenter(undist, leftx_base, rightx_base)
+
+    # Overlay the lane area to the undistorted image
+    Image_processing.laneArea(warped, undist, M_inv, left_fit, right_fit, offset_string)
 
 #--------------
 # Main

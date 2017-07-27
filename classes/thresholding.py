@@ -1,6 +1,6 @@
 
 from classes.sobel import Sobel
-from classes.convert import Convert
+from classes.image_processing import Image_processing
 
 import numpy as np
 import cv2
@@ -23,7 +23,7 @@ class Thresholding():
             exit("Invalid input, expecting orient = x or y")
         
         # Scale to 8-bit (0 - 255) then convert to uint8
-        scaled_sobel = Convert.toUnit8(abs_sobel)
+        scaled_sobel = Image_processing.toUnit8(abs_sobel)
 
         # Create a mask of 1's where the scaled gradient magnitude is between the thresholds
         grad_binary = np.zeros_like(scaled_sobel)
@@ -56,7 +56,7 @@ class Thresholding():
         grad_dir = Sobel.get_grad_dir(gray, kernel)
         
         # Scale to 8-bit (0 - 255) and convert to type = np.uint8
-        grad_dir = Convert.toUnit8(grad_dir)
+        grad_dir = Image_processing.toUnit8(grad_dir)
         
         # Create a binary mask where direction thresholds are met
         dir_binary = np.zeros_like(grad_dir)
@@ -69,7 +69,7 @@ class Thresholding():
         '''Combines sobel, magnitude and direction methods to create a binary mask'''
         
         # Convert to grayscale and run the thresholding functions on the grayscale image
-        gray = Convert.toGray(image)
+        gray = Image_processing.toGray(image)
         
         # Apply each of the thresholding functions
         gradx = Thresholding.abs_sobel(gray, orient='x', kernel=kernel, thresh=(30, 100))
@@ -92,14 +92,14 @@ class Thresholding():
         sx_thresh = (20, 100)
         
         # Convert to HLS color space and separate the S channel
-        hls = Convert.toHLS(image)
+        hls = Image_processing.toHLS(image)
         
         # Get the S channel
         S = Thresholding._getHLSChannel(hls, 's')
         
         # Sobel x
         abs_sobelx = Sobel.get_abs_x(S, kernel)
-        scaled_sobel = Convert.toUnit8(abs_sobelx)
+        scaled_sobel = Image_processing.toUnit8(abs_sobelx)
         
         # Threshold S x gradient
         sx_mask = np.zeros_like(scaled_sobel)
