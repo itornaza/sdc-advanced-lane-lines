@@ -54,7 +54,7 @@ class Image_processing():
         # Return the warped image and the perspective transform matrix
         return warped, M, M_inv
 
-    def histogramPeaks(img):
+    def histogramPeaks(img, plot=False):
         '''
         Given an image get a histogram and the positions of the left and right lanes 
         on the x axis
@@ -73,10 +73,10 @@ class Image_processing():
         rightx_base = np.argmax(histogram[midpoint:]) + midpoint
 
         # Plot the historgram and return the left and right lanes positions
-        Plotting.plotHistogram(histogram)
+        if plot: Plotting.plotHistogram(histogram)
         return leftx_base, rightx_base
 
-    def slidingWindowInit(img):
+    def slidingWindowInit(img, plot=False):
         '''
         Does the sliding window processing on an image and returns the second order
         polynomials for the left and right lane
@@ -164,12 +164,12 @@ class Image_processing():
         out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
         # Plot the resulting sliding windows
-        Plotting.plotSlidingWindow(out_img, left_fitx, right_fitx, ploty)
+        if plot: Plotting.plotSlidingWindow(out_img, left_fitx, right_fitx, ploty)
 
         # Return the lane lines equations
         return left_fit, right_fit
 
-    def slidingWindowFollowing(img, left_fit, right_fit):
+    def slidingWindowFollowing(img, left_fit, right_fit, plot=False):
         '''
         Does the sliding window processing on an image and returns the second order
         polynomials for the left and right lane. It assumes that the sliding window of
@@ -231,7 +231,7 @@ class Image_processing():
         result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
         # Plot the resulting image of the lane lines
-        Plotting.plotSlidingWindow(result, left_fitx, right_fitx, ploty)
+        if plot: Plotting.plotSlidingWindow(result, left_fitx, right_fitx, ploty)
 
         # Return the lane lines equations
         return left_fit, right_fit
@@ -288,7 +288,7 @@ class Image_processing():
         # Return the offset
         return offset_m, offset_string
 
-    def laneArea(warped, undist, M_inv, left_fit, right_fit, offset_string):
+    def laneArea(warped, undist, M_inv, left_fit, right_fit, offset_string, plot=False):
         '''
         Overlays the undistorted image with the area that is detected as lane in a single plot
         '''
@@ -322,4 +322,23 @@ class Image_processing():
         
         # Combine the result with the original image
         result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
-        Plotting.simplePlot(result)
+        if plot: Plotting.simplePlot(result)
+
+        # Return the image overlayed with the lane line detectio and curvature info
+        return result
+
+    def sanityChecks():
+        # TODO
+        
+        # Check for have similar curvature
+        check_curv = True
+        
+        # Check lateral separation
+        check_distance = True
+        
+        # Check they are roughly parallel
+        check_paralel = True
+        
+        return check_curv and check_distance and check_paralel
+
+
