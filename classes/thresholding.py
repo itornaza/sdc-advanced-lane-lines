@@ -128,6 +128,25 @@ class Thresholding():
         # Return binary mask
         return r_mask
     
+    def l_mask(image, kernel):
+        '''
+        Get binary masks from processing the L channel of HLS colorspace
+        to take care of the shadow areas
+        '''
+        
+        # Set up threshold values for the channels
+        l_thresh  = (120, 255)
+        
+        # Get the L channel
+        L = Thresholding._getHLSChannel(image, 'l')
+        
+        # Threshold L
+        l_mask = np.zeros_like(L)
+        l_mask[(L >= l_thresh[0]) & (L <= l_thresh[1])] = 1
+
+        # Return binary mask
+        return l_mask
+    
     def region_of_interest(image):
         """
         Applies an image mask.
@@ -177,7 +196,10 @@ class Thresholding():
             
         # HLS processing
         s_mask, sx_mask = Thresholding.hls_masks(image, kernel)
-            
+        
+        # Avoid pixels which have shadows and as a result darker.
+        l_mask = Thresholding.l_mask(image, kernel)
+
         # RGB processing
         r_mask = Thresholding.rgb_masks(image, kernel)
             
@@ -185,8 +207,9 @@ class Thresholding():
         gray_mask = Thresholding.gray_masks(image, kernel)
                 
         # Return binary mask
-        return (s_mask & sx_mask & gray_mask) | r_mask
-
+        # TODO without the l channel: return (s_mask & sx_mask & gray_mask) | r_mask
+        return ((s_mask & sx_mask) | gray_mask) & (r_mask & l_mask)
+    
     #------------
     # Methods
     #------------

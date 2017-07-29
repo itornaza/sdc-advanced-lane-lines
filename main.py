@@ -19,6 +19,7 @@ from moviepy.editor import VideoFileClip
 
 left_lane = Line()
 right_lane = Line()
+initiate_sw = True  # Control variable for the sliding window technique to use
 
 # Constants
 
@@ -91,6 +92,7 @@ def pipeline(image):
     '''
     global left_lane
     global right_lane
+    global initiate_sw
     
     # Undistort the image before processing and plot an example
     mtx, dist = Camera.getCalibrationData()
@@ -104,18 +106,29 @@ def pipeline(image):
     
     # Get the position of the left and right lanes
     leftx_base, rightx_base = Image_processing.histogramPeaks(warped)
-    
-    # Get the lane line equations using the sliding window
-    left_fit, right_fit = Image_processing.slidingWindowInit(warped)
-    
-    # Debug the None with a [np.array([False])] comparisson
-    if ???? :
+
+
+
+
+    # Apply the appropriate slidinig window technique
+    if initiate_sw:
+        # Get the lane line equations using the sliding window
+        left_fit, right_fit = Image_processing.slidingWindowInit(warped)
+        initiate_sw = False
+    else:
         # Calculate the sliding window of a successive image, using the lane line
         # equations that are already known from the previous image analysis
-        left_fit, right_fit = Image_processing.slidingWindowFollowing(warped, left_fit, right_fit)
-    else:
-        # Calculate the curvature of the left and right lanes
-        left_curv, right_curv, curv_string= Image_processing.curvature(warped, left_fit, right_fit)
+        left_fit, right_fit = Image_processing.slidingWindowFollowing(warped, \
+                                    left_lane.current_fit, \
+                                    right_lane.current_fit)
+
+        # Recover from loosing lines with initializing a new window search
+        # if the line second order coefficient is smaller than a margin
+        if left_fit[0] < 1.0e-04 or right_fit[0] < 1.0e-04:
+            initiate_sw = True
+
+    # Calculate the curvature of the left and right lanes
+    left_curv, right_curv, curv_string = Image_processing.curvature(warped, left_fit, right_fit)
     
     # Calculate the offset of the car from the center of the lane line
     offset_m, offset_string = Image_processing.offsetFromCenter(undist, leftx_base, rightx_base)
@@ -134,7 +147,7 @@ def createVideo(video_in, video_out):
     '''Take a video as an imput and run the lane detection pipeline on it'''
     
     clip = VideoFileClip(video_in)
-    white_clip = clip.fl_image(pipeline).subclip(0, 1)
+    white_clip = clip.fl_image(pipeline).subclip(20, 26)
     white_clip.write_videofile(video_out, audio=False)
 
 #--------------
