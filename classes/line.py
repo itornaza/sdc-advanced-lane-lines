@@ -9,8 +9,8 @@ class Line():
         # Was the line detected in the last iteration?
         self.detected = False
         
-        # x values of the last n fits of the line
-        self.recent_xfitted = []
+        # values of the last n fits of the line
+        self.recent_fitted = []
         
         # Average x values of the fitted line over the last n iterations
         self.bestx = None

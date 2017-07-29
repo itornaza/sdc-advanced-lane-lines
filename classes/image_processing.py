@@ -158,13 +158,15 @@ class Image_processing():
         left_fit = np.polyfit(lefty, leftx, 2)
         right_fit = np.polyfit(righty, rightx, 2)
         
-        # Generate x and y values for plotting
-        left_fitx, right_fitx, ploty = Image_processing.equations2components(img, left_fit, right_fit)
-        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+        # Visualize the result
+        if plot:
+            # Generate x and y values for plotting
+            left_fitx, right_fitx, ploty = Image_processing.equations2components(img, left_fit, right_fit)
+            out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+            out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-        # Plot the resulting sliding windows
-        if plot: Plotting.plotSlidingWindow(out_img, left_fitx, right_fitx, ploty)
+            # Plot the resulting sliding windows
+            Plotting.plotSlidingWindow(out_img, left_fitx, right_fitx, ploty)
 
         # Return the lane lines equations
         return left_fit, right_fit
@@ -207,31 +209,31 @@ class Image_processing():
         left_fitx, right_fitx, ploty = Image_processing.equations2components(img, left_fit, right_fit)
 
         # Visualize the results
+        if plot:
+            # Create an image to draw on and an image to show the selection window
+            out_img = np.dstack((img, img, img)) * 255
+            window_img = np.zeros_like(out_img)
+            
+            # Color in left and right line pixels
+            out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+            out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-        # Create an image to draw on and an image to show the selection window
-        out_img = np.dstack((img, img, img)) * 255
-        window_img = np.zeros_like(out_img)
-        
-        # Color in left and right line pixels
-        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+            # Generate a polygon to illustrate the search window area
+            # And recast the x and y points into usable format for cv2.fillPoly()
+            left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
+            left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin, ploty])))])
+            left_line_pts = np.hstack((left_line_window1, left_line_window2))
+            right_line_window1 = np.array([np.transpose(np.vstack([right_fitx-margin, ploty]))])
+            right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin, ploty])))])
+            right_line_pts = np.hstack((right_line_window1, right_line_window2))
 
-        # Generate a polygon to illustrate the search window area
-        # And recast the x and y points into usable format for cv2.fillPoly()
-        left_line_window1 = np.array([np.transpose(np.vstack([left_fitx-margin, ploty]))])
-        left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([left_fitx+margin, ploty])))])
-        left_line_pts = np.hstack((left_line_window1, left_line_window2))
-        right_line_window1 = np.array([np.transpose(np.vstack([right_fitx-margin, ploty]))])
-        right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([right_fitx+margin, ploty])))])
-        right_line_pts = np.hstack((right_line_window1, right_line_window2))
+            # Draw the lane onto the warped blank image
+            cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
+            cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
+            result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
-        # Draw the lane onto the warped blank image
-        cv2.fillPoly(window_img, np.int_([left_line_pts]), (0,255, 0))
-        cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
-        result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
-
-        # Plot the resulting image of the lane lines
-        if plot: Plotting.plotSlidingWindow(result, left_fitx, right_fitx, ploty)
+            # Plot the resulting image of the lane lines
+            Plotting.plotSlidingWindow(result, left_fitx, right_fitx, ploty)
 
         # Return the lane lines equations
         return left_fit, right_fit
@@ -327,18 +329,67 @@ class Image_processing():
         # Return the image overlayed with the lane line detectio and curvature info
         return result
 
-    def sanityChecks():
-        # TODO
+    def sanityChecks(img, left_fit, right_fit):
+        '''
+        If all the individual checks for similar curvature and lateral distance are passed
+        then returns true
+        '''
+        
+        curvature_margin = 1000
+        distance_margin = 201
         
         # Check for have similar curvature
         check_curv = True
+        left_curv, right_curv, string = Image_processing.curvature(img, left_fit, right_fit)
+        if abs(left_curv - right_curv) > curvature_margin:
+            check_curv = False
         
         # Check lateral separation
         check_distance = True
+        if np.mean(right_fit - left_fit) > distance_margin:
+            check_distance = False
         
-        # Check they are roughly parallel
-        check_paralel = True
+        return check_curv and check_distance
+
+    def averageLines(left_lane, right_lane, n):
+        '''Performs an average on the last n lanes'''
+
+        if len(left_lane.recent_fitted) < n:
+            left_lane.recent_fitted.append(left_fit)
+            right_lane.recent_fitted.append(right_fit)
+            left_lane.best_fit = left_fit
+            right_lane.best_fit = right_fit
+
+        else:
+            for ix in range(1, n):
+                left_lane.recent_fitted[ix - 1]  = left_lane.recent_fitted[ix]
+                right_lane.recent_fitted[ix - 1]  = right_lane.recent_fitted[ix]
         
-        return check_curv and check_distance and check_paralel
+            left_lane.recent_fitted[n - 1] = left_fit
+            right_lane.recent_fitted[n - 1] = right_fit
+            
+            # Zeroise contents
+            left_lane.best_fit[0] = 0
+            left_lane.best_fit[1] = 0
+            left_lane.best_fit[2] = 0
+            right_lane.best_fit[0] = 0
+            right_lane.best_fit[1] = 0
+            right_lane.best_fit[2] = 0
+            
+            # Recalculate averaged coefficients
+            for ix in range(0, n):
+                left_lane.best_fit[0] += left_lane.recent_fitted[ix][0]
+                left_lane.best_fit[1] += left_lane.recent_fitted[ix][1]
+                left_lane.best_fit[2] += left_lane.recent_fitted[ix][2]
+                right_lane.best_fit[0] += right_lane.recent_fitted[ix][0]
+                right_lane.best_fit[1] += right_lane.recent_fitted[ix][1]
+                right_lane.best_fit[2] += right_lane.recent_fitted[ix][2]
+            
+            left_lane.best_fit[0] = left_lane.best_fit[0] / 6
+            left_lane.best_fit[1] = left_lane.best_fit[1] / 6
+            left_lane.best_fit[2] = left_lane.best_fit[2] / 6
+            right_lane.best_fit[0] = right_lane.best_fit[0] / 6
+            right_lane.best_fit[1] = right_lane.best_fit[1] / 6
+            right_lane.best_fit[2] = right_lane.best_fit[2] / 6
 
-
+        return left_lane, right_lane

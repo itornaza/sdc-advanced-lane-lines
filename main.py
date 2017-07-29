@@ -24,7 +24,7 @@ initiate_sw = True  # Control variable for the sliding window technique to use
 # Constants
 
 KERNEL = 7 # Increase for smoother result (odd numbers only)
-test_image = 'test_images/test2.jpg' # straight_lines1
+test_image = 'test_images/test6.jpg' # straight_lines1
 video_in = 'project_video.mp4'
 video_out = 'project_video_output.mp4'
 
@@ -107,9 +107,6 @@ def pipeline(image):
     # Get the position of the left and right lanes
     leftx_base, rightx_base = Image_processing.histogramPeaks(warped)
 
-
-
-
     # Apply the appropriate slidinig window technique
     if initiate_sw:
         # Get the lane line equations using the sliding window
@@ -127,6 +124,19 @@ def pipeline(image):
         if left_fit[0] < 1.0e-04 or right_fit[0] < 1.0e-04:
             initiate_sw = True
 
+    # Sanity checks and update globals accordingly
+    if Image_processing.sanityChecks(image, left_fit, right_fit):
+        # If sanity ok then update the globals with the new line equations
+        left_lane.current_fit = left_fit
+        right_lane.current_fit = right_fit
+    else:
+        # If sanity fails use the previously set globals for calculations
+        left_fit = left_lane.current_fit
+        right_fit = right_lane.current_fit
+        
+        # And start a fresh sliding window search
+        initiate_sw = True
+
     # Calculate the curvature of the left and right lanes
     left_curv, right_curv, curv_string = Image_processing.curvature(warped, left_fit, right_fit)
     
@@ -135,10 +145,6 @@ def pipeline(image):
     
     # Overlay the lane area to the undistorted image
     result = Image_processing.laneArea(warped, undist, M_inv, left_fit, right_fit, offset_string)
-    
-    # Update the globals
-    left_lane.current_fit = left_fit
-    right_lane.current_fit = right_fit
 
     # Return processed image
     return result
@@ -147,7 +153,7 @@ def createVideo(video_in, video_out):
     '''Take a video as an imput and run the lane detection pipeline on it'''
     
     clip = VideoFileClip(video_in)
-    white_clip = clip.fl_image(pipeline).subclip(20, 26)
+    white_clip = clip.fl_image(pipeline)#.subclip(0, 2)
     white_clip.write_videofile(video_out, audio=False)
 
 #--------------
