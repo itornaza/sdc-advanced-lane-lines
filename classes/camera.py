@@ -87,7 +87,6 @@ class Camera():
         '''Save the undistorted test image'''
         dst = cv2.undistort(Camera.img, mtx, dist, None, mtx)
         cv2.imwrite(Camera.test_undistort_image_path, dst)
-        Plotting.plotResult(Camera.img, dst)
         return dst
 
     #-------------
