@@ -17,10 +17,11 @@ The rubric for this project can be found [here](https://review.udacity.com/#!/ru
 
 [image1]: ./output_images/test_undistort_image_result_1.png "Undistorted chessboard"
 [image2]: ./output_images/test_undistort_image_result_2.png "Undistorted road image"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image3]: ./output_images/binary_mask_result.png "Binary mask example"
+[image4]: ./output_images/perspective_result.png "Warp example"
+[image5]: ./output_images/sliding_window_result.png "Sliding window visual"
+[image6]: ./output_images/fitted_curves_result.png "Fitted curves result"
+[image7]: ./output_images/final_result.png "Final result"
 
 ---
 
@@ -36,13 +37,15 @@ I start by preparing "object points", which will be the (x, y, z) coordinates of
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  This is done in the `_calibrate()` internal method of the `Camera` class.
 
-The `Camera` class provides a `calibration()` method to calibrate the camera from scratch and a `getCalibrationData()` method to retrieve the stored calibration data.
+The `Camera` class provides a `calibration()` method to calibrate the camera from scratch and a `getCalibrationData()` method to retrieve the stored calibration data. To run the camera calibration from the command line type: `python main.py -c`
 
 I applied the distortion correction after calibrating the camera to the test image using the `cv2.undistort()` function and obtained this result: 
 
 ![alt text][image1]
 
 ### Exploratory Pipeline for single images
+
+To run the exploratory single image pipeline from the command line type: `python main.py -e`
 
 #### 1. Provide an example of a distortion-corrected image.
 
@@ -51,35 +54,20 @@ To demonstrate this step, I will describe how I apply the distortion correction 
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+I used a combination of color and gradient thresholds to generate a binary image. The R channel from the RGB colorspace is used for yellow lane detection, the L channel from the HLS colorspace is used for shadows supression and the H channel from the HLS namespace is processed in combination with grayscale combined masks. All of this functionality is included in the `Thresholding` class found in the `./classes/thresholding.py` file. The `lane_detection_mask()` method is the method that handles the binary mask generation. Here's an example of my output for this step.
 
 ![alt text][image3]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
-
-`python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
-`
-
-This resulted in the following source and destination points:
+The code for my perspective transform is included in the `perspectiveTransform()` method of the `Image_processing` class that can be found in the `./classes/image_processing.py`. The `perspectiveTransform()` method takes as inputs an image (`img`). The source (`src`) and destination (`dst`) points are set up as local variables of this method and are hardcoded for the specific input of the self driving car camera of the project, such as:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+| 220, 720      | 320, 720      | 
+| 1110, 720     | 920, 720      |
+| 570, 470      | 320, 0        |
+| 720, 470      | 920, 0        |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
@@ -87,19 +75,20 @@ I verified that my perspective transform was working as expected by drawing the 
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+The lane lines are identified in pixel level in the `slidingWindowInit()` method of the `Image_processing class` found in the `./classes/image_processing.py` file. A sliding window is running through the image and in each window the points of each line are detected and appended to the total line points. After all the points are collected they are fitted into 2nd order polynomials. The `slidingWindowFollowing()` method implements the same technique if the lines from a previous image are already known. This algorithm limits the search within a margin from the known lines in order to identify the new ones in order to expedite processing. The following images show the sliding window processing and the fitted lane lines.
 
 ![alt text][image5]
+![alt text][image6]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+The radius is calculated in the `curvature()` method of the `Image_processing` class and the offset of the car from the center of the lane is calculated in the `offsetFromCenter` of the `Image_processing` class. For both calculations the image to real world space is taken into consideration. The curvature is directly computed from the coeficients of the second order polynomials and the offset from center is calculated by locating the lane center from averaging the two lane points at the bottom of the image and comparing it to the center of the frame itself.
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in the `laneArea()` method of the `Image_processing` class. Here is an example of my result on a test image:
 
-![alt text][image6]
+![alt text][image7]
 
 ---
 
@@ -115,4 +104,7 @@ Here's a [youtube link to my video result](https://youtu.be/kXtFJkXawFY)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further. 
+
+
+

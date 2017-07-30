@@ -32,8 +32,8 @@ class Image_processing():
         # selected to display the lane lines nicely on a birds eye view.
         dst_bottom_left = [320,720]
         dst_bottom_right = [920, 720]
-        dst_top_left = [320, 1]
-        dst_top_right = [920, 1]
+        dst_top_left = [320, 0]
+        dst_top_right = [920, 0]
 
         # Assign the source and destination vertices for the transform
         src = np.float32([src_bottom_left, src_bottom_right, src_top_right, src_top_left])
@@ -265,8 +265,8 @@ class Image_processing():
         left_curverad = ((1 + (2 * left_fit_cr[0] * y_eval * ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2 * left_fit_cr[0])
         right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2 * right_fit_cr[0])
         
-        # Build a reporting string for curvature displaying the minimum of the two
-        curvature = min(left_curverad, right_curverad)
+        # Build a reporting string for curvature displaying the average of the two
+        curvature = (left_curverad + right_curverad) / 2.0
         curvature_string = "Radius of curvature: %.2f m" % curvature
         
         # Return the radius of curvature in meters
@@ -346,6 +346,7 @@ class Image_processing():
         
         return check_curv and check_distance
 
+    # Deprecated
     def averageLines(left_lane, right_lane, n):
         '''Performs an average on the last n lanes'''
 
