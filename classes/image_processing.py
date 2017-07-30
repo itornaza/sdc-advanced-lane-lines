@@ -23,17 +23,13 @@ class Image_processing():
 
         # Source vertices for perspective transform. The vertices are selected to map
         # the trapezoid that is formed from the left and right lane lines.
-
-        # TODO: Adjust
         src_bottom_left = [220,720]
         src_bottom_right = [1110, 720]
         src_top_left = [570, 470]
-        src_top_right = [722, 470]
+        src_top_right = [720, 470]
         
         # Destination vertices for perspective transform. The vertices are mannualy
         # selected to display the lane lines nicely on a birds eye view.
-
-        # TODO: Adjust
         dst_bottom_left = [320,720]
         dst_bottom_right = [920, 720]
         dst_top_left = [320, 1]
@@ -270,7 +266,6 @@ class Image_processing():
         right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2 * right_fit_cr[0])
         
         # Build a reporting string for curvature displaying the minimum of the two
-        # TODO: Validate min instead of average
         curvature = min(left_curverad, right_curverad)
         curvature_string = "Radius of curvature: %.2f m" % curvature
         

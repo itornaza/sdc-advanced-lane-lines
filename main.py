@@ -153,7 +153,7 @@ def createVideo(video_in, video_out):
     '''Take a video as an imput and run the lane detection pipeline on it'''
     
     clip = VideoFileClip(video_in)
-    white_clip = clip.fl_image(pipeline)#.subclip(0, 2)
+    white_clip = clip.fl_image(pipeline)
     white_clip.write_videofile(video_out, audio=False)
 
 #--------------
