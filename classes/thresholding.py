@@ -207,7 +207,6 @@ class Thresholding():
         gray_mask = Thresholding.gray_masks(image, kernel)
                 
         # Return binary mask
-        # TODO without the l channel: return (s_mask & sx_mask & gray_mask) | r_mask
         return ((s_mask & sx_mask) | gray_mask) & (r_mask & l_mask)
     
     #------------
