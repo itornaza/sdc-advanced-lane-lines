@@ -27,6 +27,12 @@ The rubric for this project can be found [here](https://review.udacity.com/#!/ru
 
 ### Writeup / README
 
+The main project python file is `./main.py`. All the rest of the source code is in `./classes/`. The program can be run with the following options:
+
+`python main.py -c` calibrates the camera
+`python main.py -e` runs the exploratory pipeline on a single test image
+`python main.py` runs the pipeline on a video
+
 ### Camera Calibration
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
@@ -104,7 +110,7 @@ Here's a [youtube link to my video result](https://youtu.be/kXtFJkXawFY)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further. 
+Points that need improvement:
 
-
-
+* The pipeline needs to be more robust in shadowed areas of the road. The L channel has been explored for this case but needs more tunning.
+* Sanity checks are performed in order not to break the pipeline from bad frames. However, it needs more elaboration and cross correlation with frame averaging for more robust results.
