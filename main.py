@@ -19,12 +19,12 @@ from moviepy.editor import VideoFileClip
 
 left_lane = Line()
 right_lane = Line()
-initiate_sw = True  # Control variable for the sliding window technique to use
+initiate_sw = True # Control variable for the sliding window technique to use
 
 # Constants
 
 KERNEL = 7 # Increase for smoother result (odd numbers only)
-test_image = 'test_images/test6.jpg' # straight_lines1
+test_image = 'test_images/test4.jpg' # straight_lines1
 video_in = 'project_video.mp4'
 video_out = 'project_video_output.mp4'
 
@@ -152,8 +152,12 @@ def pipeline(image):
 def createVideo(video_in, video_out):
     '''Take a video as an imput and run the lane detection pipeline on it'''
     
+    # Note:
+    # For debugging focus on the following video segments:
+    # .subclip(38,43)
+    # .subclip(20,26)
     clip = VideoFileClip(video_in)
-    white_clip = clip.fl_image(pipeline)
+    white_clip = clip.fl_image(pipeline)#.subclip(30,44)
     white_clip.write_videofile(video_out, audio=False)
 
 #--------------
