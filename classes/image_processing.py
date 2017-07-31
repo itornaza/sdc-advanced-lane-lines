@@ -330,7 +330,7 @@ class Image_processing():
         then returns true
         '''
         
-        curvature_margin = 1000
+        curvature_margin = 500 # 1000 was just a little too big
         distance_margin = 201
         
         # Check for have similar curvature

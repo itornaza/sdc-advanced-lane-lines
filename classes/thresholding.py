@@ -185,10 +185,10 @@ class Thresholding():
         masked_image = cv2.bitwise_and(image, mask)
         return masked_image
 
-    def lane_detection_mask(image, kernel):
+    # Deprecated
+    def lane_detection_mask_0(image, kernel):
         '''
-        Creates a robust mask to detect lane lines of white or yellow color in shades
-        under daylight conditions
+        Exploratory method for lane detection mask creation
         '''
         
         # Read in the image
@@ -208,6 +208,59 @@ class Thresholding():
                 
         # Return binary mask
         return ((s_mask & sx_mask) | gray_mask) & (r_mask & l_mask)
+    
+    def s_and_l_mask(image, kernel):
+        '''
+        Creates a mask based on the S and L channels of the HLS colorspace
+        '''
+        
+        # HLS processing
+        s_mask, sx_mask = Thresholding.hls_masks(image, kernel)
+        
+        # Avoid pixels which have shadows and as a result darker.
+        l_mask = Thresholding.l_mask(image, kernel)
+        
+        # Return binary mask
+        return ((s_mask & sx_mask) & l_mask)
+    
+    def yellow_and_white_mask(image, kernel):
+        '''
+        Creates a mask on based on the the HSL and HSV colorspaces for 
+        white and yellow lines detection
+        '''
+
+        HSV = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+        # For yellow
+        yellow = cv2.inRange(HSV, (20, 100, 100), (50, 255, 255))
+        
+        # For white
+        sensitivity_1 = 10 # orig = 68 ## 35
+        white = cv2.inRange(HSV, (0,0,255-sensitivity_1), (255,20,255))
+
+        sensitivity_2 = 5 # orig = 60 ## 30
+        HSL = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+        white_2 = cv2.inRange(HSL, (0,255 - sensitivity_2, 0), (255, 255, sensitivity_2))
+        white_3 = cv2.inRange(image, (200, 200, 200), (255 ,255 ,255))
+
+        # Return binary mask
+        return (yellow | white | white_2 | white_3)
+    
+    def lane_detection_mask(image, kernel):
+        '''
+        Returns the binary mask after the application of all the channels combinations
+        to effectively detect lane lines
+        '''
+        
+        # Mask the region of interest
+        image = Thresholding.region_of_interest(image)
+        
+        # Get the preset masks
+        mask_1 = Thresholding.s_and_l_mask(image, kernel)
+        mask_2 = Thresholding.yellow_and_white_mask(image, kernel)
+        
+        # Return the combined binary mask
+        return mask_1 | mask_2
     
     #------------
     # Methods
