@@ -237,7 +237,7 @@ class Image_processing():
     def equations2components(img, left_fit, right_fit):
         '''Takes the lane line equations and returns the x and y components'''
         
-        ploty = np.linspace(0, img.shape[0]-1, img.shape[0] )
+        ploty = np.linspace(0, img.shape[0]-1, img.shape[0])
         left_fitx = left_fit[0] * ploty**2 + left_fit[1] * ploty + left_fit[2]
         right_fitx = right_fit[0] * ploty**2 + right_fit[1] * ploty + right_fit[2]
 
@@ -327,65 +327,30 @@ class Image_processing():
     def sanityChecks(img, left_fit, right_fit):
         '''
         If all the individual checks for similar curvature and lateral distance are passed
-        then returns true
+        then returns true.
+        
+        - It checks the difference in curvature of the two lines under a certain limit and
+        taking into consideration the order of magnitude of the radius of the two lines.
         '''
         
-        curvature_margin = 500 # 1000 was just a little too big
-        distance_margin = 201
+        # Local variables
+        curvature_margin = 500.0
+        curvature_range_threshold = 2000.0
+
+        # Get the curvature of the lanes
+        left_curv, right_curv, string = Image_processing.curvature(img, left_fit, right_fit)
         
         # Check for have similar curvature
-        check_curv = True
-        left_curv, right_curv, string = Image_processing.curvature(img, left_fit, right_fit)
-        if abs(left_curv - right_curv) > curvature_margin:
-            check_curv = False
+        check_curv_diff = True
+        if (abs(left_curv - right_curv) > curvature_margin):
+            check_curv_diff = False
         
-        # Check lateral separation
-        check_distance = True
-        if np.mean(right_fit - left_fit) > distance_margin:
-            check_distance = False
+        # Check curvature order of magnitude of their radii
+        check_curv_order = False
+        if (abs(left_curv) > curvature_range_threshold):
+            check_curv_order = True
+        if (abs(right_curv) > curvature_range_threshold):
+            check_curv_order = True
         
-        return check_curv and check_distance
-
-    # Deprecated
-    def averageLines(left_lane, right_lane, n):
-        '''Performs an average on the last n lanes'''
-
-        if len(left_lane.recent_fitted) < n:
-            left_lane.recent_fitted.append(left_fit)
-            right_lane.recent_fitted.append(right_fit)
-            left_lane.best_fit = left_fit
-            right_lane.best_fit = right_fit
-
-        else:
-            for ix in range(1, n):
-                left_lane.recent_fitted[ix - 1]  = left_lane.recent_fitted[ix]
-                right_lane.recent_fitted[ix - 1]  = right_lane.recent_fitted[ix]
-        
-            left_lane.recent_fitted[n - 1] = left_fit
-            right_lane.recent_fitted[n - 1] = right_fit
-            
-            # Zeroise contents
-            left_lane.best_fit[0] = 0
-            left_lane.best_fit[1] = 0
-            left_lane.best_fit[2] = 0
-            right_lane.best_fit[0] = 0
-            right_lane.best_fit[1] = 0
-            right_lane.best_fit[2] = 0
-            
-            # Recalculate averaged coefficients
-            for ix in range(0, n):
-                left_lane.best_fit[0] += left_lane.recent_fitted[ix][0]
-                left_lane.best_fit[1] += left_lane.recent_fitted[ix][1]
-                left_lane.best_fit[2] += left_lane.recent_fitted[ix][2]
-                right_lane.best_fit[0] += right_lane.recent_fitted[ix][0]
-                right_lane.best_fit[1] += right_lane.recent_fitted[ix][1]
-                right_lane.best_fit[2] += right_lane.recent_fitted[ix][2]
-            
-            left_lane.best_fit[0] = left_lane.best_fit[0] / 6
-            left_lane.best_fit[1] = left_lane.best_fit[1] / 6
-            left_lane.best_fit[2] = left_lane.best_fit[2] / 6
-            right_lane.best_fit[0] = right_lane.best_fit[0] / 6
-            right_lane.best_fit[1] = right_lane.best_fit[1] / 6
-            right_lane.best_fit[2] = right_lane.best_fit[2] / 6
-
-        return left_lane, right_lane
+        # Return boolean result
+        return (check_curv_diff or check_curv_order)
