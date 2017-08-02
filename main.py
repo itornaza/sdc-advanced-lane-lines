@@ -19,14 +19,21 @@ from moviepy.editor import VideoFileClip
 
 left_lane = Line()
 right_lane = Line()
-initiate_sw = True # Control variable for the sliding window technique to use
+
+# Control variables for the sliding window technique to use
+initiate_sw = True
+initiate_sw_counter = 0
+initiate_sw_limit = 4
 
 # Constants
 
+DEBUG = False
 KERNEL = 7 # Increase for smoother result (odd numbers only)
-test_image = 'test_images/test4.jpg' # straight_lines1
+test_image = 'test_images/test11.jpg'
 video_in = 'project_video.mp4'
 video_out = 'project_video_output.mp4'
+video_out_db1 = 'project_video_output_debug_1.mp4'
+video_out_db2 = 'project_video_output_debug_2.mp4'
 
 class Commands(Enum):
     NONE = 0
@@ -44,6 +51,7 @@ def exploratory_pipeline():
     
     Notes:
     - Calibration shall be performed at least once before using the pipeline
+    - This pipeline works with for a single image
     '''
     # Read in an image
     image = mpimg.imread(test_image)
@@ -89,10 +97,13 @@ def pipeline(image):
     
     Notes:
     - Calibration shall be performed at least once before using the pipeline
+    - This pipeline worlks with a video
     '''
     global left_lane
     global right_lane
     global initiate_sw
+    global initiate_sw_counter
+    global initiate_sw_limit
     
     # Undistort the image before processing and plot an example
     mtx, dist = Camera.getCalibrationData()
@@ -108,10 +119,17 @@ def pipeline(image):
     leftx_base, rightx_base = Image_processing.histogramPeaks(warped)
 
     # Apply the appropriate slidinig window technique
+    # Note:
+    # - If there are more than a few bad frames, a fresh sliding window full
+    #   search is forced to take place
     if initiate_sw:
         # Get the lane line equations using the sliding window
         left_fit, right_fit = Image_processing.slidingWindowInit(warped)
+
+        # Reset the sliding window control variables
         initiate_sw = False
+        initiate_sw_counter = 0
+
     else:
         # Calculate the sliding window of a successive image, using the lane line
         # equations that are already known from the previous image analysis
@@ -119,13 +137,13 @@ def pipeline(image):
                                     left_lane.current_fit, \
                                     right_lane.current_fit)
 
-        # Recover from loosing lines with initializing a new window search
-        # if the line second order coefficient is smaller than a margin
-        if left_fit[0] < 1.0e-04 or right_fit[0] < 1.0e-04:
+        # Update the sliding window control variables
+        initiate_sw_counter = initiate_sw_counter + 1
+        if initiate_sw_counter >= 5:
             initiate_sw = True
 
     # Sanity checks and update globals accordingly
-    if Image_processing.sanityChecks(image, left_fit, right_fit):
+    if Image_processing.sanityChecks(warped, left_fit, right_fit):
         # If sanity ok then update the globals with the new line equations
         left_lane.current_fit = left_fit
         right_lane.current_fit = right_fit
@@ -152,13 +170,18 @@ def pipeline(image):
 def createVideo(video_in, video_out):
     '''Take a video as an imput and run the lane detection pipeline on it'''
     
-    # Note:
-    # For debugging focus on the following video segments:
-    # .subclip(38,43)
-    # .subclip(20,26)
     clip = VideoFileClip(video_in)
-    white_clip = clip.fl_image(pipeline)#.subclip(30,44)
-    white_clip.write_videofile(video_out, audio=False)
+    if DEBUG:
+        # 1st problematic area
+        white_clip = clip.fl_image(pipeline).subclip(18, 25)
+        white_clip.write_videofile(video_out_db1, audio=False)
+        
+        # 2nd problematic area
+        white_clip = clip.fl_image(pipeline).subclip(39, 42)
+        white_clip.write_videofile(video_out_db2, audio=False)
+    else:
+        white_clip = clip.fl_image(pipeline)
+        white_clip.write_videofile(video_out, audio=False)
 
 #--------------
 # Main
