@@ -249,8 +249,8 @@ class Image_processing():
         Calculate the curvature of the left and right lane lines given their line equations
         '''
         # Define conversions in x and y from pixels space to meters
-        ym_per_pix = 30.0 / 720.0 # meters per pixel in y dimension
-        xm_per_pix = 3.7 / 700.0 # meters per pixel in x dimension
+        ym_per_pix = 20.0 / 720.0 # meters per pixel in y dimension
+        xm_per_pix = 3.7 / 650.0 # meters per pixel in x dimension
 
         # Get the x and y components
         left_fitx, right_fitx, ploty = Image_processing.equations2components(img, left_fit, right_fit)
@@ -276,7 +276,7 @@ class Image_processing():
         '''
         Calculate the offset of the car from the center of the lane line in meters
         '''
-        xm_per_pix = 3.7 / 700.0
+        xm_per_pix = 3.7 / 650.0
         lane_center = (leftx_base + rightx_base) / 2.0
         offset_p = abs(img.shape[1]/2 - lane_center)
         offset_m = offset_p * xm_per_pix
